@@ -2,7 +2,9 @@
 package boletin22;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -10,7 +12,6 @@ import java.util.Scanner;
 import javax.swing.JOptionPane;
 
 public class Libro implements Comparable<Libro>{
-    private static ArrayList<Libro> libreria = new ArrayList();
     private String nome;
     private String autor;
     private float prezo;
@@ -55,14 +56,6 @@ public class Libro implements Comparable<Libro>{
         this.unidades = unidades;
     }
 
-    public ArrayList<Libro> getLibreria() {
-        return libreria;
-    }
-
-    public void setLibreria(ArrayList<Libro> libreria) {
-        Libro.libreria = libreria;
-    }
-
     @Override
     public String toString() {
         return "Libro{" + "nome=" + nome + ", autor=" + autor + ", prezo=" + prezo + "€" + ", unidades=" + unidades + '}';
@@ -79,20 +72,18 @@ public class Libro implements Comparable<Libro>{
         }
     }
     
-    public static void cargarLibros(){
-        String[] registro;
-        Scanner lector = null;
-        try{
-            lector=new Scanner(new File("src/boletin22/libros.txt"));
+    public static ArrayList<Libro> copiarFichero(){
+        ArrayList<Libro> lista = new ArrayList();
+        String[] cadena;
+        try(Scanner lector=new Scanner(new File("../src/boletin22/libros"))){
             while(lector.hasNextLine()){
-                registro=lector.nextLine().split(",");
-                libreria.add(new Libro(registro[0],registro[1],Float.parseFloat(registro[2]),Integer.parseInt(registro[3])));
+                cadena=lector.nextLine().split(",");
+                lista.add(new Libro(cadena[0],cadena[1],Float.parseFloat(cadena[2]),Integer.parseInt(cadena[3])));
             }
         }catch(FileNotFoundException e){
-            JOptionPane.showMessageDialog(null,e.getMessage());
-        }finally{
-            lector.close();
+            JOptionPane.showMessageDialog(null, e.getMessage());
         }
+        return lista;
     }
     
     public static Libro crearLibro(){
@@ -103,29 +94,25 @@ public class Libro implements Comparable<Libro>{
         return new Libro(nome,autor,prezo,unidades);
     }
     
-    public static void escribirFichero(){
+    public static void engadir(){
+        Libro l = crearLibro();
         PrintWriter escritor=null;
+        FileWriter archivo = null;
         try{
-            escritor=new PrintWriter(new File("src/boletin22/libros.txt"));
-            for(Libro libro : libreria){
-                escritor.println(libro.nome + "," + libro.autor + "," + libro.prezo + "," + libro.unidades);
-            }
-        }catch(FileNotFoundException e){
+            archivo=new FileWriter("../src/boletin22/libros",true);
+            escritor=new PrintWriter(archivo);
+            escritor.append("\n" + l.nome + "," + l.autor + "," + l.prezo + "," + l.unidades);   
+        }catch(IOException e){
             JOptionPane.showMessageDialog(null, e.getMessage());
         }finally{
             escritor.close();
         }
-    }
-    
-    public static void engadir(){
-        Libro l = crearLibro();
-        libreria.add(l);
-        escribirFichero();
     } 
     
     public static void consultar(String titulo){
+        ArrayList<Libro> lista = copiarFichero();
         boolean notFound = true;
-        for(Libro l:libreria){
+        for(Libro l:lista){
             if(l.nome.equalsIgnoreCase(titulo)){
                 JOptionPane.showMessageDialog(null,"El precio de ese libro es de " + l.prezo + "€");
                 notFound=false;
@@ -141,48 +128,88 @@ public class Libro implements Comparable<Libro>{
     
     public static void visualizar(){
         String conjunto="";
-        for(Libro l:libreria){
-            conjunto+="\n"+l;
-        }
-        JOptionPane.showMessageDialog(null, conjunto);
-    }
-    
-    public static void borrar(){ 
-        for(int i=0;i<libreria.size();i++){
-            if(libreria.get(i).unidades==0){
-                libreria.remove(libreria.get(i));
+        Scanner sc = null;
+        File f=null;
+        try{
+            f = new File("../src/boletin22/libros");
+            sc=new Scanner(f);
+            while(sc.hasNextLine()){
+                conjunto+="\n"+sc.nextLine();
             }
-        }
-        escribirFichero();
-        JOptionPane.showMessageDialog(null,"Libros con 0 unidades eliminados satisfactoriamente");
-    }
-    
-    public static void modificarPrecio(String titulo){
-        boolean notFound = true;
-        for(int i=0;i<libreria.size();i++){
-            if(libreria.get(i).nome.equalsIgnoreCase(titulo)){
-                libreria.get(i).prezo=Float.parseFloat(JOptionPane.showInputDialog("Novo prezo: "));
-                notFound=false;
-            }
+            JOptionPane.showMessageDialog(null, conjunto);
+        }catch(FileNotFoundException e){
+            JOptionPane.showMessageDialog(null, e.getMessage());
+        }finally{
+            sc.close();
         }
         
+    }
+    
+    public static void borrar(){
+        ArrayList<Libro> lista = copiarFichero();
+        for(int i=0;i<lista.size();i++){
+            if(lista.get(i).unidades==0){
+                lista.remove(i);
+            }
+        }
+
+        try(PrintWriter escritor = new PrintWriter(new FileWriter("../src/boletin22/libros",false))){
+            for(Libro l:lista){
+                escritor.println(l.nome + "," + l.autor + "," + l.prezo + "," + l.unidades);
+            }
+            JOptionPane.showMessageDialog(null, "Libros con 0 unidades eliminados satisfactoriamente");
+        }catch(IOException e){
+            JOptionPane.showMessageDialog(null, e.getMessage());
+        }
+        
+    }
+    
+    public static void modificarPrecio(String titulo,Float prezo){
+        ArrayList<Libro> lista = copiarFichero();
+        boolean notFound=true;
+        for(int i=0;i<lista.size();i++){
+            if(lista.get(i).nome.equalsIgnoreCase(titulo)){
+                lista.get(i).prezo=prezo;
+                notFound=false;
+                try(PrintWriter escritor=new PrintWriter(new File("../src/boletin22/libros"))){
+                    for(Libro l:lista){
+                        escritor.println(l.nome + "," + l.autor + "," + l.prezo + "," + l.unidades);
+                    }
+                }catch(IOException e){
+                    JOptionPane.showMessageDialog(null, e.getMessage());
+                }
+                break;
+            }
+        }
         if(notFound){
-            JOptionPane.showMessageDialog(null, "No se encontró ningún libro con ese nomnbre");
+            JOptionPane.showMessageDialog(null, "Libro no encontrado");
         }
     }
     
     public static void ordearPorTitulo(){
-        Collections.sort(libreria);
+        ArrayList<Libro> lista = copiarFichero();
+        Collections.sort(lista);
+        try(PrintWriter escritor=new PrintWriter(new File("../src/boletin22/libros"))){
+            for(Libro l:lista){
+                escritor.println(l.nome + "," + l.autor + "," + l.prezo + "," + l.unidades);
+            }
+        }catch(IOException e){
+            JOptionPane.showMessageDialog(null, e.getMessage());
+        }
     }
 
     public static void buscarLibros(String autor){
+        ArrayList<Libro> lista = copiarFichero();
         String conjunto="";
-        for(Libro l:libreria){
+        for(Libro l:lista){
             if(l.autor.equalsIgnoreCase(autor)){
                 conjunto+=l.nome;
             }
         }
-        JOptionPane.showMessageDialog(null, conjunto);
+        if(!conjunto.isEmpty())
+            JOptionPane.showMessageDialog(null, conjunto);
+        else
+            JOptionPane.showMessageDialog(null, "Libros no encontrados");
     }
     
     

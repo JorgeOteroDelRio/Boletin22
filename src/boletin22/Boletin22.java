@@ -6,7 +6,6 @@ import javax.swing.JOptionPane;
 public class Boletin22 {
 
     public static void main(String[] args) {
-        Libro.cargarLibros();
         do{
         int option = Integer.parseInt(JOptionPane.showInputDialog("MENU\n1)Engadir Libro\n2)Consultar prezo\n3)Visualizar libros\n4)Borrar libros con 0 unidades"
                 + "\n5)Modificar precio\n6)Ordenar por titulo\n7)Buscar libros por autor\n8)Salir"));
@@ -24,7 +23,7 @@ public class Boletin22 {
                 Libro.borrar();
                 break;
             case 5:
-                Libro.modificarPrecio(JOptionPane.showInputDialog("Nombre del libro:"));
+                Libro.modificarPrecio(JOptionPane.showInputDialog("Nombre del libro:"),Float.parseFloat(JOptionPane.showInputDialog("Novo prezo:")));
                 break;
             case 6:
                 Libro.ordearPorTitulo();
