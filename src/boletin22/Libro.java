@@ -89,7 +89,7 @@ public class Libro implements Comparable<Libro>{
     public static Libro crearLibro(){
         String nome=JOptionPane.showInputDialog("Nome libro:");
         String autor=JOptionPane.showInputDialog("Autor libro:");
-        Float prezo=Float.parseFloat(JOptionPane.showInputDialog("Prezo libro:"));
+        float prezo=Float.parseFloat(JOptionPane.showInputDialog("Prezo libro:"));
         int unidades = Integer.parseInt(JOptionPane.showInputDialog("Unidades libro:"));
         return new Libro(nome,autor,prezo,unidades);
     }
